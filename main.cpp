@@ -341,7 +341,7 @@ extern "C" int GetIPList(void *data, char *requestedHostname, addr_t* addr, int 
 
   uint64_t requestedFlags = 0;
   int hostlen = strlen(requestedHostname);
-  if (hostlen > 1 && requestedHostname[0] == 'x' && requestedHostname[1] != '0') {
+  if (hostlen > 1 && (requestedHostname[0] == 'x' || requestedHostname[0] == 'X') && requestedHostname[1] != '0') { /* either case: resolvers randomize the letters of a name; see README.dogmode.md */
     char *pEnd;
     uint64_t flags = (uint64_t)strtoull(requestedHostname+1, &pEnd, 16);
     if (*pEnd == '.' && pEnd <= requestedHostname+17 && std::find(thread->filterWhitelist.begin(), thread->filterWhitelist.end(), flags) != thread->filterWhitelist.end())
@@ -351,6 +351,7 @@ extern "C" int GetIPList(void *data, char *requestedHostname, addr_t* addr, int 
   }
   else if (strcasecmp(requestedHostname, thread->dns_opt.host))
     return 0;
+  requestedFlags |= 0x4000; /* DOG_ONLY: this seed answers every question with nodes advertising NODE_DOG_MODE only; see README.dogmode.md */
   thread->cacheHit(requestedFlags);
   auto& thisflag = thread->perflag[requestedFlags];
   unsigned int size = thisflag.cache.size();
